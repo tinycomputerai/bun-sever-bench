@@ -1,0 +1,14 @@
+{
+  "name": "bun-bench",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "validate": "bun run validate:tasks",
+    "validate:task": "bun validators/validate-task.ts",
+    "validate:tasks": "bun validators/validate-tasks.ts"
+  }
+}

@@ -1,0 +1,923 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tinycomputer.ai/bun-bench/schemas/task.schema.json",
+  "title": "bun-bench task.yaml schema",
+  "type": "object",
+  "required": [
+    "id",
+    "spec_version",
+    "task_version",
+    "title",
+    "description",
+    "difficulty",
+    "category",
+    "tags",
+    "dataset",
+    "curriculum",
+    "rollout_capture",
+    "benchmarking",
+    "instruction",
+    "success_criteria",
+    "environment",
+    "interfaces",
+    "tests",
+    "timeouts",
+    "scoring",
+    "security",
+    "dependencies",
+    "artifacts",
+    "provenance",
+    "reference_solution"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*\\.v[0-9]+$"
+    },
+    "spec_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "task_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 90
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "difficulty": {
+      "type": "object",
+      "required": [
+        "level",
+        "rationale",
+        "expected_code_size",
+        "expected_concepts"
+      ],
+      "properties": {
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "expected_code_size": {
+          "type": "object",
+          "required": [
+            "min_lines",
+            "max_lines"
+          ],
+          "properties": {
+            "min_lines": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max_lines": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "expected_concepts": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "http-apis",
+        "crud-systems",
+        "authentication",
+        "authorization",
+        "middleware",
+        "websockets",
+        "background-jobs",
+        "file-uploads",
+        "validation",
+        "databases",
+        "caching",
+        "observability",
+        "rate-limiting",
+        "error-handling",
+        "testing",
+        "security"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/kebabTag"
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "required": [
+        "split",
+        "leakage_group",
+        "trainable"
+      ],
+      "properties": {
+        "split": {
+          "type": "string",
+          "enum": [
+            "train",
+            "dev",
+            "public_eval",
+            "private_eval"
+          ]
+        },
+        "leakage_group": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "trainable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "curriculum": {
+      "type": "object",
+      "required": [
+        "skill_atoms",
+        "small_model_suitability"
+      ],
+      "properties": {
+        "skill_atoms": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "small_model_suitability": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "rollout_capture": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "benchmarking": {
+      "type": "object",
+      "required": [
+        "agent_metrics",
+        "app_metrics"
+      ],
+      "properties": {
+        "agent_metrics": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "app_metrics": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "instruction": {
+      "type": "object",
+      "required": [
+        "prompt_file",
+        "summary",
+        "constraints",
+        "allowed_assumptions",
+        "disallowed_shortcuts"
+      ],
+      "properties": {
+        "prompt_file": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "constraints": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "allowed_assumptions": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "disallowed_shortcuts": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "success_criteria": {
+      "type": "object",
+      "required": [
+        "must",
+        "must_not",
+        "edge_cases"
+      ],
+      "properties": {
+        "must": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "must_not": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "edge_cases": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "runtime",
+        "bun_version",
+        "os",
+        "architecture",
+        "network",
+        "filesystem",
+        "env",
+        "services"
+      ],
+      "properties": {
+        "runtime": {
+          "type": "string",
+          "const": "bun"
+        },
+        "bun_version": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "os": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "architecture": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "network": {
+          "type": "string",
+          "enum": [
+            "disabled",
+            "enabled",
+            "restricted"
+          ]
+        },
+        "filesystem": {
+          "type": "object",
+          "required": [
+            "writable",
+            "readonly"
+          ],
+          "properties": {
+            "writable": {
+              "$ref": "#/$defs/nonEmptyStringArray"
+            },
+            "readonly": {
+              "$ref": "#/$defs/nonEmptyStringArray"
+            }
+          },
+          "additionalProperties": false
+        },
+        "env": {
+          "type": "object",
+          "required": [
+            "required",
+            "optional"
+          ],
+          "properties": {
+            "required": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/nonEmptyString"
+              }
+            },
+            "optional": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "interfaces": {
+      "type": "object",
+      "required": [
+        "process"
+      ],
+      "properties": {
+        "process": {
+          "type": "object",
+          "required": [
+            "start_command",
+            "readiness"
+          ],
+          "properties": {
+            "start_command": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "readiness": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "http",
+                    "tcp",
+                    "none"
+                  ]
+                },
+                "path": {
+                  "type": "string"
+                },
+                "expected_status": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 599
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "http": {
+          "type": "object",
+          "required": [
+            "base_url_env",
+            "endpoints"
+          ],
+          "properties": {
+            "base_url_env": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "endpoints": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "method",
+                  "path"
+                ],
+                "properties": {
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE",
+                      "HEAD",
+                      "OPTIONS"
+                    ]
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^/"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "websocket": {
+          "type": "object"
+        },
+        "cli": {
+          "type": "object"
+        },
+        "worker_queue": {
+          "type": "object"
+        },
+        "file_artifact": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tests": {
+      "type": "object",
+      "required": [
+        "public",
+        "hidden",
+        "mutation_policy"
+      ],
+      "properties": {
+        "public": {
+          "$ref": "#/$defs/testSuite"
+        },
+        "hidden": {
+          "$ref": "#/$defs/testSuite"
+        },
+        "metamorphic": {
+          "$ref": "#/$defs/testSuite"
+        },
+        "generated": {
+          "$ref": "#/$defs/testSuite"
+        },
+        "mutation_policy": {
+          "type": "object",
+          "required": [
+            "seed_env",
+            "deterministic"
+          ],
+          "properties": {
+            "seed_env": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "deterministic": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "timeouts": {
+      "type": "object",
+      "required": [
+        "install_seconds",
+        "start_seconds",
+        "readiness_seconds",
+        "test_seconds",
+        "total_seconds",
+        "idle_seconds"
+      ],
+      "properties": {
+        "install_seconds": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "start_seconds": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "readiness_seconds": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "test_seconds": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "total_seconds": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "idle_seconds": {
+          "$ref": "#/$defs/positiveInteger"
+        }
+      },
+      "additionalProperties": false
+    },
+    "scoring": {
+      "type": "object",
+      "required": [
+        "max_score",
+        "gates",
+        "weights",
+        "performance",
+        "dependency_budget"
+      ],
+      "properties": {
+        "max_score": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "requirement",
+              "on_fail"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/kebabOrSnakeName"
+              },
+              "requirement": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "on_fail": {
+                "type": "string",
+                "enum": [
+                  "zero",
+                  "penalty",
+                  "fail"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "weights": {
+          "type": "object",
+          "required": [
+            "correctness",
+            "edge_cases",
+            "performance",
+            "security",
+            "maintainability"
+          ],
+          "properties": {
+            "correctness": {
+              "$ref": "#/$defs/ratio"
+            },
+            "edge_cases": {
+              "$ref": "#/$defs/ratio"
+            },
+            "performance": {
+              "$ref": "#/$defs/ratio"
+            },
+            "security": {
+              "$ref": "#/$defs/ratio"
+            },
+            "maintainability": {
+              "$ref": "#/$defs/ratio"
+            }
+          },
+          "additionalProperties": false
+        },
+        "performance": {
+          "type": "object",
+          "required": [
+            "metric",
+            "budget",
+            "floor"
+          ],
+          "properties": {
+            "metric": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "budget": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "dependency_budget": {
+          "type": "object",
+          "required": [
+            "max_runtime_dependencies",
+            "penalty_per_extra_dependency"
+          ],
+          "properties": {
+            "max_runtime_dependencies": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "penalty_per_extra_dependency": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "type": "object",
+      "required": [
+        "sandbox",
+        "app_requirements",
+        "forbidden_patterns"
+      ],
+      "properties": {
+        "sandbox": {
+          "type": "object",
+          "required": [
+            "network_egress",
+            "filesystem_hidden_tests",
+            "process_spawn"
+          ],
+          "properties": {
+            "network_egress": {
+              "type": "string",
+              "enum": [
+                "denied",
+                "allowed",
+                "restricted"
+              ]
+            },
+            "filesystem_hidden_tests": {
+              "type": "string",
+              "enum": [
+                "denied",
+                "allowed"
+              ]
+            },
+            "process_spawn": {
+              "type": "string",
+              "enum": [
+                "denied",
+                "allowed",
+                "restricted"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "app_requirements": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "forbidden_patterns": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "object",
+      "required": [
+        "package_manager",
+        "install_command",
+        "allow_additional",
+        "allowlist",
+        "denylist",
+        "network_during_install",
+        "network_during_tests"
+      ],
+      "properties": {
+        "package_manager": {
+          "type": "string",
+          "const": "bun"
+        },
+        "install_command": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "allow_additional": {
+          "type": "boolean"
+        },
+        "allowlist": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "denylist": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "network_during_install": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "denied",
+            "restricted"
+          ]
+        },
+        "network_during_tests": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "denied",
+            "restricted"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "object",
+      "required": [
+        "required",
+        "optional"
+      ],
+      "properties": {
+        "required": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source",
+        "authors",
+        "created_at",
+        "license"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": [
+            "authored",
+            "generated",
+            "hybrid"
+          ]
+        },
+        "generator": {
+          "type": "object",
+          "required": [
+            "name",
+            "version",
+            "seed",
+            "template_id",
+            "parameter_hash"
+          ],
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "version": {
+              "$ref": "#/$defs/semver"
+            },
+            "seed": {
+              "type": [
+                "integer",
+                "string"
+              ]
+            },
+            "template_id": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "parameter_hash": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "additionalProperties": false
+        },
+        "authors": {
+          "$ref": "#/$defs/nonEmptyStringArray"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "license": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "additionalProperties": false
+    },
+    "reference_solution": {
+      "type": "object",
+      "required": [
+        "visibility",
+        "path",
+        "validation_command",
+        "expected_score"
+      ],
+      "properties": {
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "public"
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "validation_command": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "expected_score": {
+          "type": "number",
+          "minimum": 0
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "maintainers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "changelog": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "known_failure_modes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "patternProperties": {
+    "^x_": {}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nonEmptyStringArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "kebabTag": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "kebabOrSnakeName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "testSuite": {
+      "type": "object",
+      "required": [
+        "command",
+        "files",
+        "weight"
+      ],
+      "properties": {
+        "command": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/relativePath"
+          }
+        },
+        "weight": {
+          "$ref": "#/$defs/ratio"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

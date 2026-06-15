@@ -1,0 +1,189 @@
+id: http-apis.todo-health.v1
+spec_version: 0.1.0
+task_version: 1.0.0
+title: Todo service health endpoint
+description: Build the smallest production-shaped Bun HTTP service for a todo system by implementing a deterministic health endpoint.
+difficulty:
+  level: 1
+  rationale: Requires one HTTP endpoint, JSON response handling, and a defined fallback for unsupported routes.
+  expected_code_size:
+    min_lines: 20
+    max_lines: 120
+  expected_concepts:
+    - Bun HTTP server
+    - JSON responses
+    - route matching
+category: http-apis
+tags:
+  - http-apis
+  - bun
+  - json
+  - health-check
+dataset:
+  split: dev
+  leakage_group: http-apis.todo-health
+  trainable: true
+curriculum:
+  skill_atoms:
+    - bun-http-server
+    - json-response
+    - route-matching
+    - health-endpoint
+  small_model_suitability: high
+rollout_capture:
+  enabled: true
+benchmarking:
+  agent_metrics:
+    - wall_time_ms
+    - input_tokens
+    - output_tokens
+    - tool_calls
+  app_metrics:
+    - readiness_ms
+    - p95_latency_ms
+    - max_rss_mb
+instruction:
+  prompt_file: prompt.md
+  summary: Implement GET /health for a Bun HTTP service.
+  constraints:
+    - The service must listen on the port provided by PORT.
+    - 'GET /health must return HTTP 200 and the exact JSON body {"ok": true}.'
+    - Unsupported paths or methods must return HTTP 404 with a JSON body.
+    - Do not require external network access.
+  allowed_assumptions:
+    - The process starts from the task root.
+    - No persistence is required.
+  disallowed_shortcuts:
+    - Do not hard-code behavior based on test file names.
+    - Do not read files under tests/hidden.
+    - Do not modify test files or runner files.
+success_criteria:
+  must:
+    - GET /health returns HTTP 200.
+    - 'GET /health returns the exact JSON body {"ok": true}.'
+    - Every response body is JSON.
+    - The service listens on PORT.
+  must_not:
+    - Return extra fields from GET /health.
+    - Return plain text or HTML for API responses.
+    - Return HTTP 200 for unsupported routes or methods.
+  edge_cases:
+    - 'GET /health with query parameters still returns {"ok": true}.'
+    - POST /health returns HTTP 404 with JSON.
+environment:
+  runtime: bun
+  bun_version: ">=1.1.0 <2.0.0"
+  os: linux
+  architecture: x86_64
+  network: disabled
+  filesystem:
+    writable:
+      - .
+      - /tmp
+    readonly:
+      - tests
+      - runner
+  env:
+    required:
+      PORT: allocated by runner
+    optional: {}
+  services: []
+interfaces:
+  process:
+    start_command: bun run start
+    readiness:
+      type: http
+      path: /health
+      expected_status: 200
+  http:
+    base_url_env: BASE_URL
+    endpoints:
+      - method: GET
+        path: /health
+tests:
+  public:
+    command: bun test tests/public
+    files:
+      - tests/public/health.test.ts
+    weight: 0.5
+  hidden:
+    command: bun test tests/hidden
+    files:
+      - tests/hidden/health-hidden.test.ts
+    weight: 0.5
+  mutation_policy:
+    seed_env: BUN_BENCH_SEED
+    deterministic: true
+timeouts:
+  install_seconds: 60
+  start_seconds: 10
+  readiness_seconds: 5
+  test_seconds: 30
+  total_seconds: 60
+  idle_seconds: 10
+scoring:
+  max_score: 100
+  gates:
+    - name: installs
+      requirement: install exits with status 0
+      on_fail: zero
+    - name: starts
+      requirement: readiness check passes
+      on_fail: zero
+    - name: security_baseline
+      requirement: no hidden test access or network egress
+      on_fail: zero
+  weights:
+    correctness: 0.8
+    edge_cases: 0.1
+    performance: 0.03
+    security: 0.05
+    maintainability: 0.02
+  performance:
+    metric: p95_latency_ms
+    budget: 50
+    floor: 5
+  dependency_budget:
+    max_runtime_dependencies: 0
+    penalty_per_extra_dependency: 1
+security:
+  sandbox:
+    network_egress: denied
+    filesystem_hidden_tests: denied
+    process_spawn: restricted
+  app_requirements:
+    - Return JSON for success and error responses.
+    - Do not expose stack traces.
+  forbidden_patterns:
+    - reading tests/hidden
+    - modifying runner files
+    - opening outbound sockets
+dependencies:
+  package_manager: bun
+  install_command: bun install --no-save
+  allow_additional: false
+  allowlist: []
+  denylist: []
+  network_during_install: denied
+  network_during_tests: denied
+artifacts:
+  required:
+    - result.json
+    - junit.xml
+    - logs/stdout.log
+    - logs/stderr.log
+    - metrics.json
+  optional:
+    - coverage/lcov.info
+provenance:
+  source: authored
+  authors:
+    - tinycomputer.ai
+  created_at: "2026-06-16T00:00:00Z"
+  license: Apache-2.0
+reference_solution:
+  visibility: private
+  path: solutions/reference
+  validation_command: BUN_BENCH_APP_DIR=solutions/reference bun test tests/public tests/hidden
+  expected_score: 100
+  notes: Uses native Bun.serve with explicit route and method checks.

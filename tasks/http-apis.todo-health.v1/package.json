@@ -1,0 +1,11 @@
+{
+  "name": "http-apis.todo-health.v1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/server.ts",
+    "test:public": "bun test tests/public",
+    "test:hidden": "bun test tests/hidden",
+    "test:reference": "BUN_BENCH_APP_DIR=solutions/reference bun test tests/public tests/hidden"
+  }
+}

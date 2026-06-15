@@ -102,6 +102,10 @@ description:
 difficulty:
 category:
 tags:
+dataset:
+curriculum:
+rollout_capture:
+benchmarking:
 instruction:
 success_criteria:
 environment:
@@ -236,7 +240,84 @@ tags:
   - idempotency
 ```
 
-### 6.6 `instruction`
+### 6.6 `dataset`
+
+Dataset metadata used to prevent accidental training/evaluation mixing.
+
+```yaml
+dataset:
+  split: dev
+  leakage_group: http-apis.todo-health
+  trainable: true
+```
+
+Rules:
+
+- `split` MUST be one of `train`, `dev`, `public_eval`, or `private_eval`
+- `leakage_group` MUST identify the family of tasks that should not be split across train and eval sets
+- `trainable` MUST state whether task prompts, public tests, and permitted artifacts can be exported for training
+- `private_eval` tasks MUST have `trainable: false`
+
+The v0 contract does not require behavior graphs, semantic clustering, canary tasks, or embargoes. Those may be added later as dataset controls mature.
+
+### 6.7 `curriculum`
+
+Curriculum metadata used to build balanced task sets for small specialized models.
+
+```yaml
+curriculum:
+  skill_atoms:
+    - bun-http-server
+    - json-response
+    - route-matching
+  small_model_suitability: high
+```
+
+Rules:
+
+- `skill_atoms` MUST be a non-empty list of concrete capability labels
+- `small_model_suitability` MUST be one of `low`, `medium`, or `high`
+- Skill atoms SHOULD describe reusable implementation capabilities, not broad categories
+
+### 6.8 `rollout_capture`
+
+Rollout capture policy for agent runs.
+
+```yaml
+rollout_capture:
+  enabled: true
+```
+
+Rules:
+
+- `enabled` MUST be present
+- When enabled, runners SHOULD emit rollout artifacts such as step events, final patches, token usage, and command timelines
+- v0 does not require dense RL reward events
+
+### 6.9 `benchmarking`
+
+Benchmarking metric declarations for agent and application evaluation.
+
+```yaml
+benchmarking:
+  agent_metrics:
+    - wall_time_ms
+    - input_tokens
+    - output_tokens
+    - tool_calls
+  app_metrics:
+    - readiness_ms
+    - p95_latency_ms
+    - max_rss_mb
+```
+
+Rules:
+
+- `agent_metrics` MUST be a non-empty list of model or agent execution metrics
+- `app_metrics` MUST be a non-empty list of submitted application metrics
+- Metrics SHOULD be stable names that result artifacts can report consistently
+
+### 6.10 `instruction`
 
 The exact instruction given to the agent.
 
@@ -266,7 +347,7 @@ Rules:
 
 The prompt file is the only user-facing instruction Harbor SHOULD pass to the agent unless Harbor supports structured metadata display.
 
-### 6.7 `success_criteria`
+### 6.11 `success_criteria`
 
 Behavioral requirements that define a correct solution.
 
@@ -291,7 +372,7 @@ Rules:
 - SHOULD include edge cases that prevent shallow implementations
 - MUST NOT include subjective style criteria
 
-### 6.8 `environment`
+### 6.12 `environment`
 
 Execution environment contract.
 
@@ -329,7 +410,7 @@ Rules:
 
 Tasks SHOULD be executable with network disabled after dependencies are installed or vendored.
 
-### 6.9 `interfaces`
+### 6.13 `interfaces`
 
 The externally observable interface under test.
 
@@ -365,7 +446,7 @@ Supported interface types:
 - worker queue
 - file-system artifact
 
-### 6.10 `tests`
+### 6.14 `tests`
 
 Public and hidden test contract.
 
@@ -400,7 +481,7 @@ Rules:
 
 Public tests are for orientation, not complete scoring. Hidden tests MUST cover edge cases and gaming vectors.
 
-### 6.11 `timeouts`
+### 6.15 `timeouts`
 
 Execution time limits.
 
@@ -421,7 +502,7 @@ Rules:
 - SHOULD scale with difficulty
 - MUST NOT reward sleeping, long polling, or background retries that outlive the test
 
-### 6.12 `scoring`
+### 6.16 `scoring`
 
 Scoring formula and gates.
 
@@ -482,7 +563,7 @@ score =
 
 Maintainability MUST be computed from objective checks, such as lint success, typecheck success, module boundaries, or absence of forbidden patterns. It MUST NOT depend on subjective reviewer preference.
 
-### 6.13 `security`
+### 6.17 `security`
 
 Security policy for task execution and application behavior.
 
@@ -509,7 +590,7 @@ Rules:
 - MUST list benchmark integrity violations
 - MUST distinguish app-level security failures from benchmark-compromise failures
 
-### 6.14 `dependencies`
+### 6.18 `dependencies`
 
 Allowed and forbidden dependency policy.
 
@@ -539,7 +620,7 @@ Rules:
 
 Dependency count MUST NOT be used to punish legitimate production-quality choices except through a documented small penalty.
 
-### 6.15 `artifacts`
+### 6.19 `artifacts`
 
 Files emitted by the runner.
 
@@ -563,7 +644,7 @@ Rules:
 - MUST avoid including hidden test source in exported artifacts
 - MUST include enough data to reproduce score calculations
 
-### 6.16 `provenance`
+### 6.20 `provenance`
 
 Authorship and generation metadata.
 
@@ -591,7 +672,7 @@ Rules:
 
 Provenance is mandatory because generated tasks create leakage, duplication, and memorization risks.
 
-### 6.17 `reference_solution`
+### 6.21 `reference_solution`
 
 Reference implementation metadata.
 
@@ -813,12 +894,16 @@ Every run MUST produce `result.json`.
   "metrics": {
     "p95_latency_ms": 41,
     "runtime_ms": 113492,
-    "max_rss_mb": 146
+    "max_rss_mb": 146,
+    "input_tokens": 18342,
+    "output_tokens": 2914,
+    "tool_calls": 18
   },
   "artifacts": {
     "junit": "junit.xml",
     "stdout": "logs/stdout.log",
-    "stderr": "logs/stderr.log"
+    "stderr": "logs/stderr.log",
+    "rollout": "rollout.jsonl"
   }
 }
 ```
@@ -829,6 +914,8 @@ Rules:
 - MUST include status and outcome breakdown
 - MUST include component scores before weighting
 - MUST include enough metrics to audit performance scoring
+- SHOULD include declared `benchmarking.agent_metrics` and `benchmarking.app_metrics` when collected
+- SHOULD include `rollout.jsonl` when `rollout_capture.enabled` is true
 - MUST NOT include hidden test source, secrets, or reference solution code
 
 ## 13. Harbor Integration Contract
@@ -973,21 +1060,24 @@ Generated tasks MUST be rejected when:
 
 ### 15.4 Dataset Splits
 
-Generated tasks MUST declare split eligibility:
+Every task MUST declare v0 dataset metadata:
 
 ```yaml
 dataset:
-  split: evaluation
+  split: public_eval
   leakage_group: crud.cursor-pagination.todos
-  can_train_on_public_tests: false
+  trainable: false
 ```
 
 Rules:
 
-- Training and evaluation splits MUST NOT share leakage groups
-- Near-duplicate variants MUST remain in the same split
+- `split` MUST be one of `train`, `dev`, `public_eval`, or `private_eval`
+- `leakage_group` MUST be present for authored and generated tasks
+- `trainable` MUST be present for authored and generated tasks
+- `private_eval` tasks MUST have `trainable: false`
 - Reference solutions for evaluation tasks MUST NOT be included in training exports
-- Public tests from evaluation tasks SHOULD NOT be used for fine-tuning unless explicitly marked safe
+- Train and evaluation split manifests SHOULD avoid sharing the same `leakage_group`
+- More advanced controls such as behavior graphs, semantic clustering, canary tasks, and embargoes are out of scope for v0
 
 ### 15.5 Generation Risks
 
@@ -1043,6 +1133,8 @@ A task is releasable only when all checks pass:
 - package visibility rules are verified
 - result artifact includes all required fields
 - generation provenance is present for generated tasks
+- `dataset`, `curriculum`, `rollout_capture`, and `benchmarking` metadata are present
+- private evaluation tasks are marked non-trainable
 - split and leakage metadata are present for dataset exports
 - Harbor adapter can execute the task without special-case code
 
@@ -1072,6 +1164,29 @@ tags:
   - json
   - cursor-pagination
   - idempotency
+dataset:
+  split: dev
+  leakage_group: http-apis.todo-pagination
+  trainable: true
+curriculum:
+  skill_atoms:
+    - http-routing
+    - json-validation
+    - cursor-pagination
+    - idempotency
+  small_model_suitability: medium
+rollout_capture:
+  enabled: true
+benchmarking:
+  agent_metrics:
+    - wall_time_ms
+    - input_tokens
+    - output_tokens
+    - tool_calls
+  app_metrics:
+    - readiness_ms
+    - p95_latency_ms
+    - max_rss_mb
 instruction:
   prompt_file: prompt.md
   summary: Build a todo API with cursor pagination and idempotent creates.
