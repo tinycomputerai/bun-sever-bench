@@ -12,6 +12,7 @@
     "validate:tasks": "bun validators/validate-tasks.ts",
     "run:task": "bun runners/local/run-task.ts",
     "run:reference": "bun runners/local/run-task.ts --reference",
-    "run:agent": "bun runners/agent/run-agent.ts"
+    "run:agent": "bun runners/agent/run-agent.ts",
+    "run:suite": "bun runners/suite/run-suite.ts"
   }
 }
