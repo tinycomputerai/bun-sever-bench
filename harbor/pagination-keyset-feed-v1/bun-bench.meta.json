@@ -1,0 +1,98 @@
+{
+  "bun_bench_id": "pagination.keyset-feed.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Keyset-paginated event feed",
+  "category": "http-apis",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires opaque cursor encode/decode with rejection of forged tokens, strict limit validation and clamping, descending keyset paging with a correct next_cursor terminator, and stability of older pages under concurrent inserts of higher-id events.",
+    "expected_code_size": {
+      "min_lines": 80,
+      "max_lines": 300
+    },
+    "expected_concepts": [
+      "keyset pagination",
+      "opaque cursor encoding",
+      "stable ordering",
+      "input validation",
+      "limit clamping"
+    ]
+  },
+  "tags": [
+    "http-apis",
+    "bun",
+    "pagination",
+    "keyset",
+    "cursor"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /events assigns monotonic ids starting at 1 and returns created_at.",
+      "GET /events returns items ordered by id descending (newest first).",
+      "A cursor returns only events with id strictly less than the decoded id.",
+      "next_cursor is null when no older items remain."
+    ],
+    "must_not": [
+      "Skip or duplicate an older item on a later page when new events are inserted.",
+      "Accept a forged or malformed cursor.",
+      "Return more than 100 items for a clamped limit."
+    ],
+    "edge_cases": [
+      "limit greater than 100 is clamped to 100.",
+      "limit <= 0 or non-integer returns 400 invalid_limit.",
+      "A garbage cursor returns 400 invalid_cursor.",
+      "An exact page boundary yields a next_cursor whose next page is empty."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

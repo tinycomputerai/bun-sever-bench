@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "idempotency.payment-capture.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Idempotent payment capture with request fingerprinting",
+  "category": "http-apis",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires correct idempotency-key semantics with request fingerprinting, distinguishing replay from key reuse, and a concurrency-safe per-key single-execution guard so simultaneous retries collapse into one capture.",
+    "expected_code_size": {
+      "min_lines": 80,
+      "max_lines": 300
+    },
+    "expected_concepts": [
+      "idempotency keys",
+      "request fingerprinting",
+      "replay detection",
+      "per-key concurrency control",
+      "single-flight execution"
+    ]
+  },
+  "tags": [
+    "http-apis",
+    "bun",
+    "idempotency",
+    "concurrency",
+    "payments"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /payments with a new key creates a captured payment and returns 201.",
+      "A replay with the same key and body returns the original response with the Idempotency-Replayed header.",
+      "The same key with a different body returns 409 idempotency_key_reuse.",
+      "A missing Idempotency-Key returns 400 missing_idempotency_key."
+    ],
+    "must_not": [
+      "Create two payments with different ids for a single idempotency key.",
+      "Treat a same-key different-body request as a successful replay.",
+      "Create a payment when the body is invalid."
+    ],
+    "edge_cases": [
+      "Invalid amount (<= 0 or non-integer) returns 422.",
+      "Missing currency returns 422.",
+      "A concurrent burst of identical requests yields exactly one unique payment id."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

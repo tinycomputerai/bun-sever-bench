@@ -1,0 +1,91 @@
+{
+  "bun_bench_id": "http-apis.json-echo.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "JSON echo endpoint",
+  "category": "http-apis",
+  "difficulty": {
+    "level": 1,
+    "rationale": "Requires one POST endpoint, JSON parsing, and JSON error handling.",
+    "expected_code_size": {
+      "min_lines": 25,
+      "max_lines": 140
+    },
+    "expected_concepts": [
+      "Bun HTTP server",
+      "JSON parsing",
+      "error responses"
+    ]
+  },
+  "tags": [
+    "http-apis",
+    "bun",
+    "json",
+    "echo"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.8,
+      "edge_cases": 0.1,
+      "performance": 0.03,
+      "security": 0.05,
+      "maintainability": 0.02
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 50,
+      "floor": 5
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /echo returns HTTP 200 for valid JSON.",
+      "POST /echo returns the parsed JSON body unchanged.",
+      "Invalid JSON returns HTTP 400 with JSON."
+    ],
+    "must_not": [
+      "Return plain text or HTML for API responses.",
+      "Return HTTP 200 for unsupported routes or methods."
+    ],
+    "edge_cases": [
+      "Malformed JSON returns a stable JSON error.",
+      "GET /echo returns HTTP 404 with JSON."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

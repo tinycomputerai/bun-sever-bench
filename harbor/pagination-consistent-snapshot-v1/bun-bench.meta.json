@@ -1,0 +1,96 @@
+{
+  "bun_bench_id": "pagination.consistent-snapshot.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Consistent snapshot cursor pagination under mutation",
+  "category": "http-apis",
+  "difficulty": {
+    "level": 5,
+    "rationale": "Requires snapshot isolation over a mutable sort key, stable opaque cursors bound to snapshot id, and correct behavior when items move or are deleted mid-pagination.",
+    "expected_code_size": {
+      "min_lines": 100,
+      "max_lines": 350
+    },
+    "expected_concepts": [
+      "snapshot pagination",
+      "mutable sort key",
+      "opaque cursors",
+      "tombstone cursors",
+      "keyset ordering"
+    ]
+  },
+  "tags": [
+    "http-apis",
+    "bun",
+    "pagination",
+    "snapshot",
+    "cursor"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /items creates items with updated_at.",
+      "GET /items returns snapshot, items, and next_cursor.",
+      "Pages within a snapshot do not overlap item ids."
+    ],
+    "must_not": [
+      "Duplicate an item across pages when its live updated_at moves forward.",
+      "Include post-snapshot inserts in the same snapshot pages.",
+      "Crash when a cursor anchor item is deleted live."
+    ],
+    "edge_cases": [
+      "Cursors from a different snapshot are rejected.",
+      "Malformed cursors return 400.",
+      "PATCH bumps updated_at without affecting an open snapshot page sequence."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

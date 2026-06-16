@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/authorization-scoped-tokens-v1"
+description = "Build a Bun service that authorizes file operations using OAuth-style bearer token scopes, returning the correct 401-vs-403 distinction and an RFC 6750 insufficient_scope WWW-Authenticate challenge header naming the required scope."
+keywords = ["bun-bench", "id:authorization.scoped-tokens.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:authorization", "difficulty:3"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "medium"
+category = "software_engineering"
+tags = ["authorization", "bun", "oauth-scopes", "www-authenticate", "access-control"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

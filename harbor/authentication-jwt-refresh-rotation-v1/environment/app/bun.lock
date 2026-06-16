@@ -1,0 +1,10 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "authentication.jwt-refresh-rotation.v1",
+    },
+  },
+  "packages": {},
+}

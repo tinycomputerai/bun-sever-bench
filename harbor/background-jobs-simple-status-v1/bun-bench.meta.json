@@ -1,0 +1,91 @@
+{
+  "bun_bench_id": "background-jobs.simple-status.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Simple background job status",
+  "category": "background-jobs",
+  "difficulty": {
+    "level": 2,
+    "rationale": "Requires job creation, id generation, in-memory lookup, and missing-job errors.",
+    "expected_code_size": {
+      "min_lines": 55,
+      "max_lines": 240
+    },
+    "expected_concepts": [
+      "job ids",
+      "in-memory state",
+      "status lookup"
+    ]
+  },
+  "tags": [
+    "background-jobs",
+    "bun",
+    "json",
+    "jobs"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.8,
+      "edge_cases": 0.1,
+      "performance": 0.03,
+      "security": 0.05,
+      "maintainability": 0.02
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 50,
+      "floor": 5
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /jobs returns HTTP 202 with id and completed status.",
+      "GET /jobs/:id returns HTTP 200 for existing jobs.",
+      "Unknown job ids return HTTP 404 with JSON."
+    ],
+    "must_not": [
+      "Return a successful status for unknown jobs.",
+      "Return plain text or HTML for API responses."
+    ],
+    "edge_cases": [
+      "Job ids increment from job_1.",
+      "Missing jobs return not_found."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

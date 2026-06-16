@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "authentication.jwt-key-rotation.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "JWT verification with rotating signing keys",
+  "category": "authentication",
+  "difficulty": {
+    "level": 5,
+    "rationale": "Requires multi-key state consistency, overlap and retirement windows, kid-indexed verification without try-all-keys fallback, and JWKS cache coherence after rotation.",
+    "expected_code_size": {
+      "min_lines": 120,
+      "max_lines": 400
+    },
+    "expected_concepts": [
+      "jwt kid header",
+      "jwks key rotation",
+      "key retirement overlap",
+      "cache invalidation",
+      "hmac-sha256 verification"
+    ]
+  },
+  "tags": [
+    "authentication",
+    "bun",
+    "jwt",
+    "jwks",
+    "key-rotation"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /verify returns 200 with sub for a valid token signed with a non-retired kid.",
+      "POST /keys/rotate introduces a new active key while prior keys remain valid.",
+      "POST /keys/:kid/retire removes a key from verification.",
+      "GET /.well-known/jwks lists non-retired verification keys."
+    ],
+    "must_not": [
+      "Accept tokens without a kid header.",
+      "Fall back to another key when the header kid is unknown or retired.",
+      "Serve stale JWKS after rotation without invalidating the cache."
+    ],
+    "edge_cases": [
+      "Tokens under a pre-rotation kid verify until that kid is retired.",
+      "Malformed kid values at retire return 400.",
+      "alg none and wrong-kid signatures return 401."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

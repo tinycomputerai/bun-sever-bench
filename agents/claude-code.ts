@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
-import { appendFileSync, mkdirSync, writeFileSync as writeEmptyLog } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import type { Agent, AgentContext, AgentRunOutcome } from "./types";
+import { isOnPath, pipeToFile, prepareLogFiles, remainingMs } from "./process";
 
 const CLAUDE_BIN = "claude";
 
@@ -9,15 +9,7 @@ export class ClaudeCodeAgent implements Agent {
   readonly id = "claude-code";
 
   async prepare(context: AgentContext): Promise<void> {
-    const proc = Bun.spawn({
-      cmd: ["sh", "-c", `command -v ${CLAUDE_BIN}`],
-      cwd: context.workspaceDir,
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const exitCode = await proc.exited;
-
-    if (exitCode !== 0) {
+    if (!(await isOnPath(CLAUDE_BIN, context.workspaceDir))) {
       throw new Error(
         `${CLAUDE_BIN} CLI not found on PATH; install Claude Code before running this agent`,
       );
@@ -85,11 +77,6 @@ export class ClaudeCodeAgent implements Agent {
   }
 }
 
-function remainingMs(deadlineMs: number, phaseTimeoutMs: number): number {
-  const remainingTotal = Math.max(0, deadlineMs - Date.now());
-  return Math.max(0, Math.min(phaseTimeoutMs, remainingTotal));
-}
-
 async function parseClaudeMetrics(stdoutPath: string): Promise<
   Pick<AgentRunOutcome["metrics"], "input_tokens" | "output_tokens" | "tool_calls">
 > {
@@ -115,25 +102,4 @@ async function parseClaudeMetrics(stdoutPath: string): Promise<
   } catch {
     return {};
   }
-}
-
-function prepareLogFiles(stdoutPath: string, stderrPath: string): void {
-  mkdirSync(dirname(stdoutPath), { recursive: true });
-  writeEmptyLog(stdoutPath, "");
-  writeEmptyLog(stderrPath, "");
-}
-
-async function pipeToFile(
-  stream: ReadableStream<Uint8Array> | null,
-  filePath: string,
-): Promise<void> {
-  if (!stream) {
-    return;
-  }
-
-  const decoder = new TextDecoder();
-  for await (const chunk of stream) {
-    appendFileSync(filePath, decoder.decode(chunk, { stream: true }));
-  }
-  appendFileSync(filePath, decoder.decode());
 }

@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "authentication.jwt-verify.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Manual HS256 JWT verification with algorithm pinning",
+  "category": "authentication",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires manual base64url decoding, HMAC-SHA256 signature recomputation, a constant-time comparison, ordered validation, and the alg-confusion defense that pins the algorithm before any signature handling.",
+    "expected_code_size": {
+      "min_lines": 100,
+      "max_lines": 300
+    },
+    "expected_concepts": [
+      "base64url decoding",
+      "hmac-sha256 signing",
+      "algorithm pinning",
+      "constant-time comparison",
+      "ordered token validation"
+    ]
+  },
+  "tags": [
+    "authentication",
+    "bun",
+    "jwt",
+    "hmac",
+    "alg-confusion"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "GET /me with a valid unexpired HS256 token returns 200 with the claims.",
+      "The alg field is pinned to HS256; any other value returns 401 invalid_alg.",
+      "A tampered payload yields 401 invalid_signature.",
+      "An expired token yields 401 expired."
+    ],
+    "must_not": [
+      "Accept an alg:none token.",
+      "Accept an HS512 token even when signed with the same secret.",
+      "Treat a missing Bearer prefix as a valid token."
+    ],
+    "edge_cases": [
+      "No Authorization header returns 401 missing_token.",
+      "A token without exactly three segments returns 401 malformed.",
+      "A valid signature but missing sub claim returns 401 malformed."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

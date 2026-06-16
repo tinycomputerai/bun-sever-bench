@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "authorization.scoped-tokens.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Scope-based authorization with challenge headers",
+  "category": "authorization",
+  "difficulty": {
+    "level": 3,
+    "rationale": "Requires per-endpoint scope enforcement (not a blanket valid-token check), an exact 401 versus 403 distinction, and a correctly formed RFC 6750 WWW-Authenticate challenge header naming the scope each endpoint requires.",
+    "expected_code_size": {
+      "min_lines": 70,
+      "max_lines": 260
+    },
+    "expected_concepts": [
+      "bearer token authentication",
+      "scope-based authorization",
+      "per-endpoint scope enforcement",
+      "401 vs 403 distinction",
+      "www-authenticate challenge header"
+    ]
+  },
+  "tags": [
+    "authorization",
+    "bun",
+    "oauth-scopes",
+    "www-authenticate",
+    "access-control"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.55,
+      "edge_cases": 0.3,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "Missing or unknown token returns 401 unauthorized.",
+      "GET requires files:read, POST requires files:write, DELETE requires files:delete.",
+      "A token missing the required scope returns 403 insufficient_scope.",
+      "The 403 response includes a WWW-Authenticate header naming the required scope."
+    ],
+    "must_not": [
+      "Authorize an endpoint solely because the token is valid.",
+      "Return 403 for an unknown or missing token.",
+      "Omit the WWW-Authenticate header on an insufficient-scope response."
+    ],
+    "edge_cases": [
+      "A read-only token POSTing returns 403 with WWW-Authenticate naming files:write.",
+      "A write token DELETEing returns 403 with WWW-Authenticate naming files:delete.",
+      "The admin token can read, write, and delete."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

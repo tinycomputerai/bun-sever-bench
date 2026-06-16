@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "observability.request-metrics.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "HTTP request metrics with bounded label cardinality",
+  "category": "observability",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires correct route templating to bound label cardinality (the classic high-cardinality bug of labeling by raw id), excluding the metrics endpoint from its own counters, echo-vs-generate request-id logic, and emitting valid parseable Prometheus exposition text.",
+    "expected_code_size": {
+      "min_lines": 90,
+      "max_lines": 300
+    },
+    "expected_concepts": [
+      "metrics instrumentation",
+      "route templating",
+      "label cardinality control",
+      "prometheus exposition format",
+      "request-id propagation"
+    ]
+  },
+  "tags": [
+    "observability",
+    "bun",
+    "metrics",
+    "prometheus",
+    "request-id"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "Every response includes an X-Request-Id header.",
+      "GET /metrics returns 200 text/plain Prometheus exposition.",
+      "http_requests_total is keyed by (method, route template, status).",
+      "Duration count and sum increase with each handled request."
+    ],
+    "must_not": [
+      "Record GET /metrics in http_requests_total or the duration metrics.",
+      "Create a separate counter series per raw id value.",
+      "Drop the X-Request-Id header from any response."
+    ],
+    "edge_cases": [
+      "GET /items/1 and GET /items/2 share a single route=\"/items/:id\" series.",
+      "A 500 from GET /work?fail=1 is counted separately from 200s.",
+      "An empty or whitespace X-Request-Id is treated as absent and generated."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

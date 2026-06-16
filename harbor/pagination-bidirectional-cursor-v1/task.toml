@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/pagination-bidirectional-cursor-v1"
+description = "Build a Bun service that serves an in-memory item list with forward and backward cursor pagination, always returning items in ascending id order with correct Relay-style page_info (has_next, has_prev, start_cursor, end_cursor)."
+keywords = ["bun-bench", "id:pagination.bidirectional-cursor.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:http-apis", "difficulty:4"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "hard"
+category = "software_engineering"
+tags = ["http-apis", "bun", "pagination", "cursor", "bidirectional"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

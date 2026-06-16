@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/background-jobs-simple-status-v1"
+description = "Build a Bun API that creates in-memory jobs and returns their final status by id."
+keywords = ["bun-bench", "id:background-jobs.simple-status.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:background-jobs", "difficulty:2"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "easy"
+category = "software_engineering"
+tags = ["background-jobs", "bun", "json", "jobs"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 60.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

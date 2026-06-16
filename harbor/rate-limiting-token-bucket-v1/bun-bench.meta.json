@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "rate-limiting.token-bucket.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Token bucket rate limiter per client",
+  "category": "rate-limiting",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires continuous time-based token refill math, a hard capacity cap that prevents accumulation, correct fractional-token bookkeeping with floor for the remaining header, and integer Retry-After computation.",
+    "expected_code_size": {
+      "min_lines": 50,
+      "max_lines": 220
+    },
+    "expected_concepts": [
+      "token bucket rate limiting",
+      "continuous time-based refill",
+      "capacity capping",
+      "per-client in-memory state",
+      "retry-after computation"
+    ]
+  },
+  "tags": [
+    "rate-limiting",
+    "bun",
+    "headers",
+    "state",
+    "token-bucket"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "An initial burst of five succeeds and the sixth returns 429.",
+      "Tokens refill continuously over elapsed time at one per 200ms.",
+      "Allowed responses carry X-RateLimit-Remaining equal to the floored token count.",
+      "429 responses carry an integer Retry-After of at least one second."
+    ],
+    "must_not": [
+      "Allow tokens to exceed capacity after a long idle period.",
+      "Share buckets across different client ids.",
+      "Return plain text or HTML for API responses."
+    ],
+    "edge_cases": [
+      "Missing X-Client-Id returns 400 missing_client_id.",
+      "After draining, a partial wait refills only the accrued whole tokens.",
+      "A long idle period still caps the burst at five requests."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

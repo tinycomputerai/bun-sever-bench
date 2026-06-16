@@ -1,0 +1,96 @@
+{
+  "bun_bench_id": "caching.cache-stampede.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Read-through cache with stampede protection",
+  "category": "caching",
+  "difficulty": {
+    "level": 5,
+    "rationale": "Requires concurrent single-flight, SWR background refresh dedup, negative cache TTL, per-key isolation, and memory bounds under parallel load.",
+    "expected_code_size": {
+      "min_lines": 100,
+      "max_lines": 350
+    },
+    "expected_concepts": [
+      "single-flight",
+      "stale-while-revalidate",
+      "negative caching",
+      "per-key isolation",
+      "lru eviction"
+    ]
+  },
+  "tags": [
+    "caching",
+    "bun",
+    "single-flight",
+    "stampede",
+    "swr"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 200,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "GET /compute/:key returns value and cached flag.",
+      "Concurrent misses for the same key invoke compute once.",
+      "GET /stats reports per-key invocation counts."
+    ],
+    "must_not": [
+      "Invoke compute N times for N concurrent misses on one key.",
+      "Block unrelated keys during single-flight on another key.",
+      "Pin error results permanently."
+    ],
+    "edge_cases": [
+      "After TTL expiry serve stale immediately with one background refresh.",
+      "fail- keys negative-cache briefly then retry.",
+      "LRU eviction bounds cache size at 20 entries."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

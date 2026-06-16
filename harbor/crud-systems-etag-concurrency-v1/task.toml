@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/crud-systems-etag-concurrency-v1"
+description = "Build a Bun service that stores configuration entries in memory and protects updates with optimistic concurrency control using strong content-hash ETags and RFC 7232 If-Match conditional requests, returning 412 on a stale precondition and supporting the wildcard."
+keywords = ["bun-bench", "id:crud-systems.etag-concurrency.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:crud-systems", "difficulty:4"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "hard"
+category = "software_engineering"
+tags = ["crud-systems", "bun", "etag", "optimistic-concurrency", "conditional-requests"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

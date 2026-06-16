@@ -1,0 +1,8 @@
+# Git
+.git/
+
+# OS
+.DS_Store
+
+# Harbor
+dist.tar.gz

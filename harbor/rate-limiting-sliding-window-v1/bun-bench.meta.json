@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "rate-limiting.sliding-window.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Sliding window rate limiter per client",
+  "category": "rate-limiting",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires a true rolling-window algorithm (per-client timestamp tracking with age-out) rather than a fixed calendar window, plus correct Retry-After math and RateLimit header bookkeeping under burst and partial-decay conditions.",
+    "expected_code_size": {
+      "min_lines": 50,
+      "max_lines": 220
+    },
+    "expected_concepts": [
+      "sliding window rate limiting",
+      "per-client in-memory state",
+      "timestamp aging",
+      "retry-after computation",
+      "rate limit headers"
+    ]
+  },
+  "tags": [
+    "rate-limiting",
+    "bun",
+    "headers",
+    "state",
+    "sliding-window"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "Five requests within a rolling window succeed and the sixth returns 429.",
+      "The window slides so burst requests stay blocked until the oldest ages out.",
+      "Allowed responses carry X-RateLimit-Limit and X-RateLimit-Remaining headers.",
+      "429 responses carry an integer Retry-After of at least one second."
+    ],
+    "must_not": [
+      "Reset the limit on a fixed calendar boundary while older hits are still in window.",
+      "Share state across different client ids.",
+      "Return plain text or HTML for API responses."
+    ],
+    "edge_cases": [
+      "Missing X-Client-Id returns 400 missing_client_id.",
+      "After the window fully elapses the client is allowed again.",
+      "X-RateLimit-Remaining decrements with each allowed request."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

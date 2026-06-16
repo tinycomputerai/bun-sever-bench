@@ -1,0 +1,96 @@
+{
+  "bun_bench_id": "idempotency.exactly-once-webhook.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Exactly-once signed webhook processing with ordering",
+  "category": "crud-systems",
+  "difficulty": {
+    "level": 5,
+    "rationale": "Combines webhook authentication, idempotency, per-key sequence ordering, gap buffering, superseded replay ignore, and concurrency-safe exactly-once apply.",
+    "expected_code_size": {
+      "min_lines": 120,
+      "max_lines": 400
+    },
+    "expected_concepts": [
+      "hmac webhook verification",
+      "event deduplication",
+      "sequence ordering",
+      "gap buffering",
+      "concurrent idempotency"
+    ]
+  },
+  "tags": [
+    "crud-systems",
+    "bun",
+    "idempotency",
+    "webhooks",
+    "ordering"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /webhook with valid signature acks and applies increment/set events.",
+      "Duplicate event_id returns 200 without double apply.",
+      "GET /resources/:id returns balance and last_sequence."
+    ],
+    "must_not": [
+      "Apply tampered unsigned events.",
+      "Advance state across a sequence gap before the missing event arrives.",
+      "Double-apply under concurrent duplicate delivery."
+    ],
+    "edge_cases": [
+      "Out-of-order sequences are buffered then applied in order.",
+      "Superseded lower-sequence events are acked without changing state.",
+      "Gap events are acked but do not advance last_sequence until filled."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

@@ -13,6 +13,8 @@
     "run:task": "bun runners/local/run-task.ts",
     "run:reference": "bun runners/local/run-task.ts --reference",
     "run:agent": "bun runners/agent/run-agent.ts",
-    "run:suite": "bun runners/suite/run-suite.ts"
+    "run:suite": "bun runners/suite/run-suite.ts",
+    "harbor:export": "bun runners/harbor/export-task.ts",
+    "harbor:export-suite": "bun runners/harbor/export-suite.ts"
   }
 }

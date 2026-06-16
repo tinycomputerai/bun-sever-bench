@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/idempotency-payment-capture-v1"
+description = "Build a Bun HTTP service that captures payments idempotently using an Idempotency-Key header. Replays of the same key and body return the original response, the same key with a different body conflicts, and a concurrent burst of identical requests must create exactly one payment."
+keywords = ["bun-bench", "id:idempotency.payment-capture.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:http-apis", "difficulty:4"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "hard"
+category = "software_engineering"
+tags = ["http-apis", "bun", "idempotency", "concurrency", "payments"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "databases.optimistic-version.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Versioned document store with optimistic concurrency",
+  "category": "databases",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires durable SQLite persistence, transactional read-modify-write to prevent lost updates, correct RFC 7232 conditional-request semantics, and monotonic versioning that survives restarts.",
+    "expected_code_size": {
+      "min_lines": 120,
+      "max_lines": 400
+    },
+    "expected_concepts": [
+      "sqlite persistence",
+      "transactional updates",
+      "optimistic concurrency",
+      "conditional requests",
+      "monotonic versioning"
+    ]
+  },
+  "tags": [
+    "databases",
+    "bun",
+    "sqlite",
+    "optimistic-concurrency",
+    "conditional-requests"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /docs creates a document at version 1 with an ETag header.",
+      "PUT with a matching If-Match increments the version by exactly one.",
+      "PUT with a stale If-Match returns 409 with the current version.",
+      "Documents and versions survive a process restart."
+    ],
+    "must_not": [
+      "Allow two concurrent updates on the same version to both succeed.",
+      "Reuse or skip version numbers.",
+      "Apply an update when If-Match is absent."
+    ],
+    "edge_cases": [
+      "Missing If-Match returns 428 precondition_required.",
+      "Non-numeric If-Match returns 400.",
+      "DELETE without If-Match returns 428 and a matching DELETE returns 204."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

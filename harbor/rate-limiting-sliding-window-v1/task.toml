@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/rate-limiting-sliding-window-v1"
+description = "Build a Bun service that rate-limits GET /resource to five requests per rolling 1000ms window per X-Client-Id, tracking request timestamps so the window slides continuously and emitting correct RateLimit and Retry-After headers."
+keywords = ["bun-bench", "id:rate-limiting.sliding-window.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:rate-limiting", "difficulty:4"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "hard"
+category = "software_engineering"
+tags = ["rate-limiting", "bun", "headers", "state", "sliding-window"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

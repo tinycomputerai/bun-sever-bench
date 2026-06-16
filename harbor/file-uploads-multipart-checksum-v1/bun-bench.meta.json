@@ -1,0 +1,99 @@
+{
+  "bun_bench_id": "file-uploads.multipart-checksum.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Secure multipart upload with integrity checksum",
+  "category": "file-uploads",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires correct multipart parsing via the FormData API, strict size and content-type enforcement, robust basename sanitization that defeats path traversal, and a SHA-256 digest matching a standard independent implementation with optional checksum verification.",
+    "expected_code_size": {
+      "min_lines": 80,
+      "max_lines": 300
+    },
+    "expected_concepts": [
+      "multipart parsing",
+      "size and type enforcement",
+      "filename sanitization",
+      "sha256 integrity",
+      "path-traversal defense"
+    ]
+  },
+  "tags": [
+    "file-uploads",
+    "bun",
+    "multipart",
+    "sha256",
+    "security"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.55,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.1,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "A valid upload returns 201 with id, filename, size, sha256, and content_type.",
+      "The sha256 is the lowercase hex digest of the raw file bytes.",
+      "A filename containing path traversal is stored as its basename only.",
+      "GET /uploads/:id/checksum returns the same sha256 for a stored upload."
+    ],
+    "must_not": [
+      "Store a file whose X-Expected-Sha256 header does not match the digest.",
+      "Accept a file larger than 1 MiB or with a disallowed content type.",
+      "Persist directory components or \"..\" segments in the stored filename."
+    ],
+    "edge_cases": [
+      "Missing file field returns 400 missing_file.",
+      "Oversize file returns 413 too_large.",
+      "Disallowed content type returns 415 unsupported_type.",
+      "X-Expected-Sha256 mismatch returns 422 checksum_mismatch.",
+      "Unknown id on the checksum endpoint returns 404."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "bun_bench_id": "rate-limiting.distributed-fairness.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Shared-store rate limiter with atomic fairness",
+  "category": "rate-limiting",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires atomic check-and-increment on a shared counter, correct window rollover without double refill, fairness across clients, and ignoring client clock skew.",
+    "expected_code_size": {
+      "min_lines": 60,
+      "max_lines": 250
+    },
+    "expected_concepts": [
+      "atomic admission",
+      "fixed window counter",
+      "rate limit headers",
+      "shared store",
+      "clock discipline"
+    ]
+  },
+  "tags": [
+    "rate-limiting",
+    "bun",
+    "distributed-fairness",
+    "atomic-counter",
+    "shared-store"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "GET /resource returns 200 with X-RateLimit-* headers under the limit.",
+      "Exceeding 10 requests per window returns 429 with Retry-After.",
+      "Different client ids have independent counters."
+    ],
+    "must_not": [
+      "Admit more than 10 requests per client per window.",
+      "Let two concurrent last-slot requests both succeed.",
+      "Grant extra budget based on client clock headers."
+    ],
+    "edge_cases": [
+      "After window elapse the client receives a fresh budget of 10.",
+      "X-RateLimit-Remaining decrements 9 down to 0 across ten allowed hits."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

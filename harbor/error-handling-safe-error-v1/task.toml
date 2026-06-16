@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/error-handling-safe-error-v1"
+description = "Build a Bun service that returns stable JSON errors without leaking stack traces."
+keywords = ["bun-bench", "id:error-handling.safe-error.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:error-handling", "difficulty:1"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "easy"
+category = "software_engineering"
+tags = ["error-handling", "bun", "json", "safe-errors"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 60.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

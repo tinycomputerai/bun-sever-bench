@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/caching-cache-stampede-v1"
+description = "Build a Bun read-through cache with single-flight deduplication, stale-while- revalidate, brief negative caching, per-key isolation, and bounded LRU eviction with observable compute invocation counts."
+keywords = ["bun-bench", "id:caching.cache-stampede.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:caching", "difficulty:5"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "hard"
+category = "software_engineering"
+tags = ["caching", "bun", "single-flight", "stampede", "swr"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 420.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

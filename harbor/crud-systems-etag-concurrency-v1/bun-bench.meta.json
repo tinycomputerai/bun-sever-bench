@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "crud-systems.etag-concurrency.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Config store with strong ETag optimistic concurrency",
+  "category": "crud-systems",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires a deterministic canonical serialization hashed into a strong ETag, correct RFC 7232 conditional-request semantics (412 not 409, 428 when the precondition is missing, wildcard match), and a compare-and-set on the content hash that prevents concurrent lost updates.",
+    "expected_code_size": {
+      "min_lines": 90,
+      "max_lines": 350
+    },
+    "expected_concepts": [
+      "content-addressed etags",
+      "canonical serialization",
+      "conditional requests",
+      "precondition failure semantics",
+      "compare-and-set"
+    ]
+  },
+  "tags": [
+    "crud-systems",
+    "bun",
+    "etag",
+    "optimistic-concurrency",
+    "conditional-requests"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /configs creates an entry with a quoted hex sha256 ETag header.",
+      "GET returns the same deterministic ETag for unchanged content.",
+      "PUT with a matching If-Match applies the update and returns a new ETag.",
+      "PUT with a stale or mismatched If-Match returns 412 precondition_failed."
+    ],
+    "must_not": [
+      "Allow two concurrent updates on the same original ETag to both succeed.",
+      "Apply an update when If-Match is absent.",
+      "Use a non-deterministic or version-counter value as the ETag."
+    ],
+    "edge_cases": [
+      "Missing If-Match returns 428 precondition_required.",
+      "If-Match wildcard matches any existing entry.",
+      "If-Match comparison ignores surrounding quotes and an optional W/ prefix."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "bun_bench_id": "pagination.bidirectional-cursor.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Bidirectional cursor pagination",
+  "category": "http-apis",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires opaque cursor encode/decode, forward (after) and backward (before) slicing where the backward slice is taken from the high end yet returned ascending, has_next/has_prev computed by peeking one extra row, mutual exclusion of after/before, and strict limit validation.",
+    "expected_code_size": {
+      "min_lines": 90,
+      "max_lines": 320
+    },
+    "expected_concepts": [
+      "bidirectional pagination",
+      "opaque cursor encoding",
+      "page-info computation",
+      "off-by-one boundary handling",
+      "input validation"
+    ]
+  },
+  "tags": [
+    "http-apis",
+    "bun",
+    "pagination",
+    "cursor",
+    "bidirectional"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /items assigns monotonic ids starting at 1.",
+      "GET /items returns items ascending by id in every mode.",
+      "after returns items with id greater than the decoded cursor.",
+      "before returns the highest-id slice below the cursor, still ascending.",
+      "has_next and has_prev reflect items beyond each returned edge."
+    ],
+    "must_not": [
+      "Accept both after and before in the same request.",
+      "Accept a forged or malformed cursor.",
+      "Return a backward (before) page in descending order."
+    ],
+    "edge_cases": [
+      "has_prev is false on the first forward page; has_next is false on the last page.",
+      "has_next is correct exactly at a boundary (no off-by-one).",
+      "Passing both after and before returns 400 invalid_cursor_combination.",
+      "A garbage cursor returns 400 invalid_cursor.",
+      "limit <= 0 or non-integer returns 400 invalid_limit; limit > 100 is clamped."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

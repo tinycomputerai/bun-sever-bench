@@ -1,0 +1,98 @@
+{
+  "bun_bench_id": "error-handling.circuit-breaker.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Resilient caller with retry semantics and a circuit breaker",
+  "category": "error-handling",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires correct idempotent-vs-non-idempotent retry handling, a precise consecutive-failure counting model, and a closed/open/half_open state machine with fail-fast behavior and time-based cooldown recovery, all kept deterministic and free of off-by-one errors.",
+    "expected_code_size": {
+      "min_lines": 110,
+      "max_lines": 350
+    },
+    "expected_concepts": [
+      "retry-with-backoff",
+      "idempotency",
+      "circuit-breaker-state-machine",
+      "fail-fast",
+      "cooldown-recovery"
+    ]
+  },
+  "tags": [
+    "error-handling",
+    "bun",
+    "retry",
+    "circuit-breaker",
+    "resilience"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "GET /call retries up to 3 attempts and reports the succeeding attempt number.",
+      "POST /call invokes the dependency at most once with no retry.",
+      "Five consecutive failed calls open the breaker.",
+      "While open, a /call returns 503 without invoking the dependency.",
+      "After the cooldown a successful trial closes the breaker and resets failures."
+    ],
+    "must_not": [
+      "Retry a non-idempotent POST /call.",
+      "Invoke the dependency while the breaker is open.",
+      "Count retry attempts as separate consecutive failures."
+    ],
+    "edge_cases": [
+      "A failed GET /call increments dependency_calls by 3 but consecutive_failures by 1.",
+      "A failed half-open trial reopens the breaker and restarts the cooldown.",
+      "An invalid dependency mode returns 400 and leaves the current mode intact."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

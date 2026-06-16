@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "websockets.seqnum-resume.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Sequenced WebSocket delivery with resumable catch-up",
+  "category": "websockets",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires per-channel monotonic sequencing, a replay buffer, correct last_seq catch-up that is gap-free and duplicate-free across disconnect and reconnect, ordered delivery, and strict channel isolation.",
+    "expected_code_size": {
+      "min_lines": 90,
+      "max_lines": 320
+    },
+    "expected_concepts": [
+      "websocket server",
+      "monotonic sequencing",
+      "replay buffer",
+      "resumable catch-up",
+      "channel isolation"
+    ]
+  },
+  "tags": [
+    "websockets",
+    "bun",
+    "sequencing",
+    "resume",
+    "channel-isolation"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /publish assigns the next per-channel seq starting at 1 and returns it.",
+      "Live subscribers receive published messages with strictly increasing seq.",
+      "Reconnecting with last_seq replays exactly the messages with greater seq, in order.",
+      "last_seq=0 on a channel with a buffer replays all buffered messages in order."
+    ],
+    "must_not": [
+      "Replay a message a subscriber already acknowledged via last_seq.",
+      "Skip or reuse a sequence number.",
+      "Deliver one channel's messages to a subscriber of another channel."
+    ],
+    "edge_cases": [
+      "Reconnect after a gap delivers only the missed messages, in order.",
+      "last_seq beyond the buffer replays nothing and then delivers live messages.",
+      "Connecting without a channel does not upgrade and returns 400."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

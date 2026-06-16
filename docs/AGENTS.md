@@ -4,10 +4,20 @@ Phase 4 agent runner for executing coding agents against bun-bench tasks and wri
 
 ## Command
 
+Run a single task:
+
 ```sh
 bun run run:agent \
   --task tasks/http-apis.todo-health.v1 \
   --agent claude-code
+```
+
+Run the full suite with any supported agent:
+
+```sh
+bun run run:suite --agent claude-code --tasks 'tasks/**'
+bun run run:suite --agent codex-cli  --tasks 'tasks/**'
+bun run run:suite --agent gpt-5      --tasks 'tasks/**'
 ```
 
 ## Supported Agents
@@ -15,9 +25,14 @@ bun run run:agent \
 | Agent ID | Status | Description |
 | --- | --- | --- |
 | `claude-code` | implemented | Anthropic Claude Code CLI (`claude -p`) |
-| `codex-cli` | planned | OpenAI Codex CLI |
+| `codex-cli` | implemented | OpenAI Codex CLI (`codex exec`) |
+| `gpt-5` | implemented | GPT-5 via the OpenAI Codex CLI harness (`codex exec --model gpt-5`) |
 | `aider` | planned | Aider |
 | `opencode` | planned | OpenCode |
+
+All three implemented agents share the same workspace materialization, prompt
+construction, validation lifecycle, scoring, and `result.json` schema. They
+differ only in how the agent phase is executed.
 
 ## Lifecycle
 
@@ -136,6 +151,49 @@ claude -p --dangerously-skip-permissions --output-format json
 
 with the constructed prompt on stdin, from the materialized workspace directory.
 
+Token usage (`input_tokens`, `output_tokens`) and `tool_calls` (`num_turns`) are
+parsed from the final JSON object on stdout.
+
+## Codex CLI Setup (`codex-cli`)
+
+Install the OpenAI Codex CLI and authenticate before running:
+
+```sh
+codex --version
+codex login            # ChatGPT sign-in, or set OPENAI_API_KEY in the environment
+```
+
+The runner invokes, from the materialized workspace directory:
+
+```sh
+codex exec --json --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox "<prompt>"
+```
+
+- `exec` runs Codex non-interactively (no TUI).
+- `--dangerously-bypass-approvals-and-sandbox` lets it edit files and run
+  commands without prompts, matching the isolated per-run workspace model.
+- `--skip-git-repo-check` allows execution inside the generated `runs/` workspace.
+- `--json` emits a JSONL event stream; token usage is parsed best-effort from the
+  usage / `token_count` events (kept as the last cumulative counts). When usage is
+  absent, only `wall_time_ms` is reported.
+
+## GPT-5 Setup (`gpt-5`)
+
+The `gpt-5` agent evaluates the GPT-5 model **through the same Codex CLI harness**,
+with the model pinned:
+
+```sh
+codex exec --json --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox --model gpt-5 "<prompt>"
+```
+
+It therefore shares all Codex setup (install + auth) and only adds `--model gpt-5`.
+This keeps `gpt-5` a true file-editing coding agent that produces a working
+solution in the workspace, rather than a single-shot completion. To evaluate a
+different model through the same path, add another `CodexCliAgent` to the registry
+with a different `model` option. Requires that the authenticated account has
+access to the `gpt-5` model; otherwise the agent phase exits non-zero
+(`failed_agent`).
+
 ## Adding a New Agent
 
 1. Create `agents/<agent-id>.ts` implementing the `Agent` interface.
@@ -157,13 +215,18 @@ with the constructed prompt on stdin, from the materialized workspace directory.
 ```
 agents/
   types.ts          # Agent interface
+  process.ts        # Shared subprocess helpers (spawn/pipe/timeout/PATH check)
   claude-code.ts    # Claude Code implementation
+  codex-cli.ts      # OpenAI Codex CLI implementation (shared base)
+  gpt-5.ts          # GPT-5 via Codex CLI (model-pinned subclass)
   registry.ts       # Agent factory
 runners/agent/
   run-agent.ts      # CLI entry point
   runner.ts         # Orchestration
   prompt.ts         # Prompt construction
   result.ts         # Agent result builder
+runners/suite/
+  run-suite.ts      # Suite CLI entry point (--agent <id>)
 runners/shared/
   validation.ts     # Shared install/start/test lifecycle
 ```

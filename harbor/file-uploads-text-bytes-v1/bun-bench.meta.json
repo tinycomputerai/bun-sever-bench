@@ -1,0 +1,91 @@
+{
+  "bun_bench_id": "file-uploads.text-bytes.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Text upload byte counter",
+  "category": "file-uploads",
+  "difficulty": {
+    "level": 1,
+    "rationale": "Requires content-type checking, body reading, and byte-length reporting.",
+    "expected_code_size": {
+      "min_lines": 30,
+      "max_lines": 160
+    },
+    "expected_concepts": [
+      "request body reading",
+      "content-type validation",
+      "byte counting"
+    ]
+  },
+  "tags": [
+    "file-uploads",
+    "bun",
+    "text",
+    "bytes"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.8,
+      "edge_cases": 0.1,
+      "performance": 0.03,
+      "security": 0.05,
+      "maintainability": 0.02
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 50,
+      "floor": 5
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /upload returns HTTP 200 for text/plain.",
+      "Successful responses include the byte count.",
+      "Non-text uploads return HTTP 415 with JSON."
+    ],
+    "must_not": [
+      "Write uploaded bodies to disk.",
+      "Return plain text or HTML for API responses."
+    ],
+    "edge_cases": [
+      "UTF-8 text byte length is counted correctly.",
+      "Missing content type returns unsupported_media_type."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

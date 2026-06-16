@@ -1,0 +1,98 @@
+{
+  "bun_bench_id": "authorization.rbac-roles.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Role-based access control with resource ownership",
+  "category": "authorization",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires combining role permissions with per-resource ownership checks and an admin override, plus an exact 401 (unauthenticated) versus 403 (authenticated but forbidden) distinction across four endpoints.",
+    "expected_code_size": {
+      "min_lines": 90,
+      "max_lines": 320
+    },
+    "expected_concepts": [
+      "bearer token authentication",
+      "role-based authorization",
+      "resource ownership",
+      "admin override",
+      "401 vs 403 distinction"
+    ]
+  },
+  "tags": [
+    "authorization",
+    "bun",
+    "rbac",
+    "ownership",
+    "access-control"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.55,
+      "edge_cases": 0.3,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "Missing or unknown token returns 401 unauthorized.",
+      "Admin and editor can create documents; viewer cannot.",
+      "Editor can update documents they own.",
+      "Admin can update or delete any document."
+    ],
+    "must_not": [
+      "Allow a viewer to create, update, or delete.",
+      "Allow an editor to update a document owned by another user.",
+      "Allow a non-admin to delete a document.",
+      "Return 403 for an unknown or missing token."
+    ],
+    "edge_cases": [
+      "An editor updating another editor's document returns 403.",
+      "Editor and viewer deleting any document returns 403.",
+      "An unknown token returns 401, distinct from a forbidden 403."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

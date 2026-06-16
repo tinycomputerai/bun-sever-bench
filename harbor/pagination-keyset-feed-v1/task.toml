@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/pagination-keyset-feed-v1"
+description = "Build a Bun service that serves an in-memory event feed newest-first using keyset (cursor) pagination with opaque tokens, correct limit clamping, and ordering that stays stable when new events are inserted mid-pagination."
+keywords = ["bun-bench", "id:pagination.keyset-feed.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:http-apis", "difficulty:4"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "hard"
+category = "software_engineering"
+tags = ["http-apis", "bun", "pagination", "keyset", "cursor"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

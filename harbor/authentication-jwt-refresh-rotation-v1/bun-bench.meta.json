@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "authentication.jwt-refresh-rotation.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Refresh-token rotation with reuse detection",
+  "category": "authentication",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires modeling token families, atomic rotation that consumes the presented token, and reuse detection that revokes a whole family including its currently-valid token, plus HS256 access-token verification.",
+    "expected_code_size": {
+      "min_lines": 120,
+      "max_lines": 350
+    },
+    "expected_concepts": [
+      "access and refresh tokens",
+      "refresh rotation",
+      "reuse detection",
+      "token family revocation",
+      "hmac-sha256 access tokens"
+    ]
+  },
+  "tags": [
+    "authentication",
+    "bun",
+    "jwt",
+    "refresh-token",
+    "rotation"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /login returns an access_token and refresh_token for valid credentials.",
+      "POST /refresh rotates the pair and consumes the presented refresh token.",
+      "Reusing a rotated-out refresh token returns 401 token_reuse_detected.",
+      "The access token from login authorizes GET /protected with sub alice."
+    ],
+    "must_not": [
+      "Allow a consumed refresh token to be used again.",
+      "Keep a family usable after reuse is detected.",
+      "Issue an access token to wrong credentials."
+    ],
+    "edge_cases": [
+      "An unknown refresh token returns 401 invalid_refresh.",
+      "After family revocation the currently-valid refresh token also returns 401.",
+      "An invalid or missing access token returns 401 from GET /protected."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

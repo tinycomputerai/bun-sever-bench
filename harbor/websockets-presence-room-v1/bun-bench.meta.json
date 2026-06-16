@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "websockets.presence-room.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Room presence and chat relay over WebSocket",
+  "category": "websockets",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires stateful management of multiple WebSocket connections grouped by room, broadcasting presence updates to the right subset of sockets, enforcing strict room isolation, excluding the sender on chat fan-out, and removing users on disconnect with no leaked roster entries.",
+    "expected_code_size": {
+      "min_lines": 80,
+      "max_lines": 300
+    },
+    "expected_concepts": [
+      "websocket server",
+      "connection grouping",
+      "presence broadcast",
+      "room isolation",
+      "disconnect cleanup"
+    ]
+  },
+  "tags": [
+    "websockets",
+    "bun",
+    "presence",
+    "broadcast",
+    "room-isolation"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "A joining socket receives a presence message listing all current room members sorted.",
+      "Other sockets in the room receive an updated presence message when a user joins.",
+      "GET /rooms/:room returns the current sorted roster for that room.",
+      "A chat message reaches other members of the same room only."
+    ],
+    "must_not": [
+      "Deliver a message or presence update across different rooms.",
+      "Echo a chat message back to the sender.",
+      "Leave a disconnected user in the roster."
+    ],
+    "edge_cases": [
+      "On disconnect remaining members receive presence without the departed user.",
+      "GET /rooms/:room on an empty or unknown room returns an empty users list.",
+      "Connecting without room or user does not upgrade and returns 400."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

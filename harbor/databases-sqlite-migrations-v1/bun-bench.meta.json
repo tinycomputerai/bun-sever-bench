@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "databases.sqlite-migrations.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Idempotent ordered SQLite schema migrations",
+  "category": "databases",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires a durable version table, ordered one-time application of migrations including a non-idempotent ALTER that must be guarded so the second boot neither re-runs nor crashes, plus correct reporting and data persistence across restarts.",
+    "expected_code_size": {
+      "min_lines": 120,
+      "max_lines": 400
+    },
+    "expected_concepts": [
+      "sqlite persistence",
+      "schema migrations",
+      "migration version table",
+      "idempotent boot",
+      "restart-safe schema evolution"
+    ]
+  },
+  "tags": [
+    "databases",
+    "bun",
+    "sqlite",
+    "migrations",
+    "idempotency"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "On boot the app applies the three migrations in order, recorded in schema_migrations.",
+      "GET /schema/version returns version 3 and the applied list in order.",
+      "POST /users persists a user with name and email.",
+      "Users and the migration version survive a process restart."
+    ],
+    "must_not": [
+      "Re-apply a migration that is already recorded.",
+      "Crash on a later boot by re-running the ALTER.",
+      "Store schema state or user data only in memory."
+    ],
+    "edge_cases": [
+      "A second and third boot keep version at 3 and do not re-run migrations.",
+      "Missing or non-string name/email returns 422.",
+      "Unknown user id returns 404."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/background-jobs-retry-queue-v1"
+description = "Build a Bun service with an in-process asynchronous job queue. A background worker processes jobs decoupled from the request, retries failures with a small backoff up to a bounded number of attempts, and moves exhausted jobs to a terminal dead-letter state, all observable through a job status endpoint."
+keywords = ["bun-bench", "id:background-jobs.retry-queue.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:background-jobs", "difficulty:4"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "hard"
+category = "software_engineering"
+tags = ["background-jobs", "bun", "job-queue", "retries", "state-machine"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

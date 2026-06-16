@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/websockets-seqnum-resume-v1"
+description = "Build a Bun service that publishes messages over HTTP and delivers them over WebSocket, tagging each with a per-channel monotonically increasing sequence number and supporting resume so reconnecting subscribers receive exactly the missed messages in order with no gaps or duplicates."
+keywords = ["bun-bench", "id:websockets.seqnum-resume.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:websockets", "difficulty:4"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "hard"
+category = "software_engineering"
+tags = ["websockets", "bun", "sequencing", "resume", "channel-isolation"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 900.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

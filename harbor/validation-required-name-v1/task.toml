@@ -1,0 +1,36 @@
+schema_version = "1.3"
+artifacts = []
+
+[task]
+name = "bun-bench/validation-required-name-v1"
+description = "Build a Bun endpoint that creates a user only when the request contains a valid non-empty name."
+keywords = ["bun-bench", "id:validation.required-name.v1", "task_version:1.0.0", "spec_version:0.1.0", "category:validation", "difficulty:1"]
+[[task.authors]]
+name = "tincomputer.ai"
+
+[metadata]
+author_name = "tincomputer.ai"
+author_email = "unknown"
+difficulty = "easy"
+category = "software_engineering"
+tags = ["validation", "bun", "json", "users"]
+expert_time_estimate_min = 0.0
+junior_time_estimate_min = 0.0
+
+[verifier]
+timeout_sec = 300.0
+
+[verifier.env]
+
+[agent]
+timeout_sec = 60.0
+
+[environment]
+network_mode = "no-network"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

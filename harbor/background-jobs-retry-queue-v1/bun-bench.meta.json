@@ -1,0 +1,97 @@
+{
+  "bun_bench_id": "background-jobs.retry-queue.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "Asynchronous job queue with retries and dead-lettering",
+  "category": "background-jobs",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires per-job attempt accounting, an observable state machine, terminal state enforcement so dead-lettered jobs never run again, asynchronous processing decoupled from the HTTP request, and avoiding races when status is read mid-processing.",
+    "expected_code_size": {
+      "min_lines": 100,
+      "max_lines": 350
+    },
+    "expected_concepts": [
+      "background worker",
+      "per-job attempt accounting",
+      "retry with backoff",
+      "dead-lettering",
+      "observable state machine"
+    ]
+  },
+  "tags": [
+    "background-jobs",
+    "bun",
+    "job-queue",
+    "retries",
+    "state-machine"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /jobs returns 201 with status queued, attempts 0, max_attempts 3.",
+      "An ok job reaches succeeded with attempts equal to 1.",
+      "A flaky job reaches succeeded with attempts equal to 3.",
+      "A fail job reaches dead_letter with attempts equal to 3 and a last_error."
+    ],
+    "must_not": [
+      "Process a job synchronously inside the POST request.",
+      "Run a job after it has reached a terminal state.",
+      "Let attempts exceed max_attempts."
+    ],
+    "edge_cases": [
+      "An unknown job type is treated as failing and dead-letters.",
+      "dead_letter is terminal and remains unchanged when polled repeatedly.",
+      "Invalid JSON returns 400 and a missing type returns 422."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}

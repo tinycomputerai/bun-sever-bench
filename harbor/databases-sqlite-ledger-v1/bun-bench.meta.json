@@ -1,0 +1,98 @@
+{
+  "bun_bench_id": "databases.sqlite-ledger.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "title": "SQLite money ledger with transactional transfers",
+  "category": "databases",
+  "difficulty": {
+    "level": 4,
+    "rationale": "Requires durable SQLite persistence, an atomic read-check-debit-credit inside one transaction, correct rejection of insufficient funds with zero side effects, and invariants (conservation, non-negativity) that hold even under concurrent transfers from the same account.",
+    "expected_code_size": {
+      "min_lines": 120,
+      "max_lines": 400
+    },
+    "expected_concepts": [
+      "sqlite persistence",
+      "transactional updates",
+      "balance invariants",
+      "atomic money movement",
+      "input validation"
+    ]
+  },
+  "tags": [
+    "databases",
+    "bun",
+    "sqlite",
+    "transactions",
+    "invariants"
+  ],
+  "scoring": {
+    "max_score": 100,
+    "gates": [
+      {
+        "name": "installs",
+        "requirement": "install exits with status 0",
+        "on_fail": "zero"
+      },
+      {
+        "name": "starts",
+        "requirement": "readiness check passes",
+        "on_fail": "zero"
+      },
+      {
+        "name": "security_baseline",
+        "requirement": "no hidden test access or network egress",
+        "on_fail": "zero"
+      }
+    ],
+    "weights": {
+      "correctness": 0.6,
+      "edge_cases": 0.25,
+      "performance": 0.05,
+      "security": 0.05,
+      "maintainability": 0.05
+    },
+    "performance": {
+      "metric": "p95_latency_ms",
+      "budget": 80,
+      "floor": 10
+    },
+    "dependency_budget": {
+      "max_runtime_dependencies": 0,
+      "penalty_per_extra_dependency": 1
+    }
+  },
+  "success_criteria": {
+    "must": [
+      "POST /accounts creates an account with the given (or zero) balance.",
+      "A valid transfer debits the source and credits the destination by the same amount.",
+      "The sum of all account balances is conserved across transfers.",
+      "Accounts and balances survive a process restart."
+    ],
+    "must_not": [
+      "Allow any balance to become negative.",
+      "Apply a partial change when a transfer fails.",
+      "Let two concurrent transfers from one account overdraw it."
+    ],
+    "edge_cases": [
+      "Insufficient funds returns 422 insufficient_funds with no balance change.",
+      "from == to returns 400 same_account.",
+      "Unknown account returns 404 account_not_found.",
+      "Non-positive or non-integer amount returns 422."
+    ]
+  },
+  "environment_network": "disabled",
+  "reward_model": {
+    "description": "Harbor reward.txt is computed by the bun-bench gate model in tests/test.sh.",
+    "values": {
+      "public_and_hidden_pass": 1,
+      "public_pass_hidden_fail": 0.25,
+      "public_fail": 0
+    },
+    "maps_to_bun_bench_score": {
+      "1.0": 100,
+      "0.25": 25,
+      "0.0": 0
+    }
+  }
+}
