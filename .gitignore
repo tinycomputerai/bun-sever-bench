@@ -2,3 +2,5 @@ node_modules/
 runs/
 results/
 jobs/
+datasets/**/*.jsonl
+runners/export/.tmp-export-*

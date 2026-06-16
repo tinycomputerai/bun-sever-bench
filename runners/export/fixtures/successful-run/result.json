@@ -1,0 +1,29 @@
+{
+  "task_id": "authentication.bearer-profile.v1",
+  "task_version": "1.0.0",
+  "spec_version": "0.1.0",
+  "run_id": "fixture-successful-authentication.bearer-profile.v1",
+  "agent_id": "fixture-agent",
+  "mode": "agent",
+  "status": "completed",
+  "score": 100,
+  "max_score": 100,
+  "started_at": "2026-06-17T00:00:00.000Z",
+  "completed_at": "2026-06-17T00:01:00.000Z",
+  "durations": {
+    "agent_ms": 1000,
+    "install_ms": 100,
+    "start_ms": 50,
+    "readiness_ms": 25,
+    "public_tests_ms": 200,
+    "hidden_tests_ms": 200,
+    "total_ms": 42000
+  },
+  "metrics": {
+    "wall_time_ms": 1000,
+    "input_tokens": 1200,
+    "output_tokens": 800,
+    "tool_calls": 3
+  },
+  "error": null
+}
