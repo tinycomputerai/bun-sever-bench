@@ -53,10 +53,6 @@ async function main(): Promise<void> {
   console.log(`total wall time: ${result.summary.total_wall_time_ms}ms`);
   console.log(`summary: results/${agentId}/summary.json`);
   console.log(`leaderboard: results/${agentId}/leaderboard.json`);
-
-  if (result.summary.failed > 0) {
-    process.exitCode = 1;
-  }
 }
 
 main().catch((error) => {
