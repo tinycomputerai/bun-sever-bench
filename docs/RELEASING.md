@@ -164,18 +164,31 @@ When `dry_run` is false:
 
 ## Prerequisites
 
-### GitHub secrets
+### GitHub secrets and variables
 
-| Secret | Purpose |
-| --- | --- |
-| `GITHUB_TOKEN` | Provided automatically; used for GitHub Release creation |
-| `HARBOR_TOKEN` | Serialized Harbor CLI credentials (`~/.harbor/credentials.json`) |
-| `HF_TOKEN` | Hugging Face write token (staging upload + final dataset publish) |
+| Name | Type | Purpose |
+| --- | --- | --- |
+| `TINYCOMPUTER_GITHUB_APP_CLIENT_ID` | Organization variable | Client ID for the TinyComputer GitHub App |
+| `TINYCOMPUTER_GITHUB_APP_PRIVATE_KEY` | secret | Private key for the TinyComputer GitHub App |
+| `HARBOR_TOKEN` | secret | Base64-encoded Harbor CLI credentials (`~/.harbor/credentials.json`) |
+| `HF_TOKEN` | secret | Hugging Face write token (staging upload + final dataset publish) |
+
+GitHub Releases are created by the **TinyComputer GitHub App**, not the default
+`GITHUB_TOKEN`. The release workflow mints an app installation token with
+`contents: write` and passes it to `release-it` as `GITHUB_TOKEN`. Releases
+appear under the app bot identity (for example `tinycomputer[bot]`).
+
+The app must be installed on the `tinycomputerai` organization with access to
+this repository and permission to create releases.
 
 ### Harbor credentials
 
-Run `uvx harbor auth login` locally once, then copy the contents of
-`~/.harbor/credentials.json` into the `HARBOR_TOKEN` secret.
+Run `uvx harbor auth login` locally once, then base64-encode the credentials
+file into the `HARBOR_TOKEN` secret:
+
+```sh
+base64 < ~/.harbor/credentials.json | tr -d '\n'
+```
 
 ### Hugging Face token
 

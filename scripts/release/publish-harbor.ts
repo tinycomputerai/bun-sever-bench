@@ -7,9 +7,30 @@ import { repoRoot } from "./paths";
 const HARBOR_CREDENTIALS_DIR = join(homedir(), ".harbor");
 const HARBOR_CREDENTIALS_PATH = join(HARBOR_CREDENTIALS_DIR, "credentials.json");
 
-function installHarborCredentials(token: string): void {
+function decodeHarborToken(encoded: string): string {
+  let decoded: string;
+  try {
+    decoded = Buffer.from(encoded, "base64").toString("utf8").trim();
+  } catch {
+    throw new Error("HARBOR_TOKEN must be a valid base64-encoded Harbor credentials payload");
+  }
+
+  if (decoded.length === 0) {
+    throw new Error("HARBOR_TOKEN decoded to an empty string");
+  }
+
+  try {
+    JSON.parse(decoded);
+  } catch {
+    throw new Error("HARBOR_TOKEN must decode to Harbor credentials JSON (~/.harbor/credentials.json)");
+  }
+
+  return decoded;
+}
+
+function installHarborCredentials(credentialsJson: string): void {
   mkdirSync(HARBOR_CREDENTIALS_DIR, { recursive: true });
-  writeFileSync(HARBOR_CREDENTIALS_PATH, token, { mode: 0o600 });
+  writeFileSync(HARBOR_CREDENTIALS_PATH, credentialsJson, { mode: 0o600 });
 }
 
 function buildPublishCommand(tag: string, harborRoot: string): string[] {
@@ -17,12 +38,12 @@ function buildPublishCommand(tag: string, harborRoot: string): string[] {
 }
 
 async function runHarborPublish(tag: string, harborRoot: string): Promise<number> {
-  const token = process.env.HARBOR_TOKEN?.trim();
-  if (!token) {
+  const encoded = process.env.HARBOR_TOKEN?.trim();
+  if (!encoded) {
     throw new Error("HARBOR_TOKEN is required to publish Harbor packages");
   }
 
-  installHarborCredentials(token);
+  installHarborCredentials(decodeHarborToken(encoded));
 
   const command = buildPublishCommand(tag, harborRoot);
   const proc = Bun.spawn(command, {

@@ -24,7 +24,7 @@ on:
         default: true
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.event.inputs.tag }}
@@ -100,9 +100,19 @@ jobs:
       - name: Verify release artifacts
         run: bun run release:verify -- --tag "${{ github.event.inputs.tag }}"
 
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.TINYCOMPUTER_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TINYCOMPUTER_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
       - name: Create GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           VERSION="${RELEASE_TAG#v}"
           if [ "${DRY_RUN}" = "true" ]; then
