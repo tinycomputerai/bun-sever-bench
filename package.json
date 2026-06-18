@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "devDependencies": {
+    "@commitlint/cli": "21.0.1",
     "@release-it/conventional-changelog": "^11.0.1",
     "@types/bun": "latest",
     "release-it": "^20.2.0",
