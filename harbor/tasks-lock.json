@@ -1,5 +1,5 @@
 {
-  "checksum": "ee9f6a76c336570e64566d9104c1888d6d6c891b50004094516f73f94ca43c55",
+  "checksum": "734351e2679d316602a508857f8f2f63408f4b05485f5c8aa05726fb6ade6fa2",
   "tasks": {
     "authentication-bearer-profile-v1": "9e520b66372427ce84c82b174b8121f42f7fa28829335b365c18fbfcf948fd81",
     "authentication-jwt-key-rotation-v1": "eda0b8a634d3a142e53078457e53621ce149c1ee513130b0e7f48a2cf54d5221",
